@@ -1,8 +1,8 @@
-# 🍽️ SYSTÈME DE GESTION DE RESTAURANT - PLAN VISUEL
+# SYSTÈME DE GESTION DE RESTAURANT - PLAN VISUEL
 
-## 📊 VUE D'ENSEMBLE EN 1 IMAGE
+## VUE D'ENSEMBLE EN 1 IMAGE
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    RESTAURANT "LE CONCURRENT"                        │
 │                    50 Clients | 11 Personnel                         │
@@ -25,12 +25,13 @@
 
 ---
 
-## 🎯 LES 4 MODULES EXPLIQUÉS
+## LES 4 MODULES EXPLIQUÉS
 
-### MODULE 1 : GESTION DES TABLES 🪑
+### MODULE 1 : GESTION DES TABLES
+
 **Personne 1**
 
-```
+```text
 PROBLÈME : 50 clients arrivent, seulement 15 tables
 
 ┌─────────────────────────────────────────┐
@@ -52,21 +53,25 @@ PROBLÈME : 50 clients arrivent, seulement 15 tables
     └───┘└───┘└───┘└───┘└───┘
 ```
 
-**CONCEPTS UTILISÉS:**
-- `wait()` → Client attend qu'une table se libère
-- `notifyAll()` → Table libérée, réveille tous les clients
-- `synchronized` → Protège le compteur de tables
-- `ReentrantLock` → Une par table VIP (réservation exclusive)
-- `tryLock(30s)` → VIP attend max 30s, sinon bascule sur table normale
+#### Concepts Utilisés
 
-**FLOW:**
-```
+| Concept | Utilisation |
+|---------|-------------|
+| `wait()` | Client attend qu'une table se libère |
+| `notifyAll()` | Table libérée, réveille tous les clients |
+| `synchronized` | Protège le compteur de tables |
+| `ReentrantLock` | Une par table VIP (réservation exclusive) |
+| `tryLock(30s)` | VIP attend max 30s, sinon bascule sur table normale |
+
+#### Flow
+
+```java
 Client arrive
     ↓
 VIP? → tryLock(table VIP, 30s)
     ├─ Succès → Table VIP
     └─ Échec → File normale
-    
+
 Normal? → synchronized(tables) {
     if(dispo > 0) → Assigne table
     else → wait() // Attend libération
@@ -75,10 +80,11 @@ Normal? → synchronized(tables) {
 
 ---
 
-### MODULE 2 : FILE DE COMMANDES 📋
+### MODULE 2 : FILE DE COMMANDES
+
 **Personne 2**
 
-```
+```text
 PROBLÈME : 4 serveurs ajoutent, 3 cuisiniers + 1 chef prennent
 
     SERVEURS (Producers)              CUISINIERS (Consumers)
@@ -98,42 +104,51 @@ PROBLÈME : 4 serveurs ajoutent, 3 cuisiniers + 1 chef prennent
     └───────────────────────────────────────────────┘
 ```
 
-**CONCEPTS UTILISÉS:**
-- `wait()` → Cuisinier attend si file vide
-- `notify()` → Serveur ajoute commande, réveille UN cuisinier
-- `synchronized` → Protège la PriorityQueue
-- `PriorityQueue` → Tri automatique par priorité
+#### Concepts Utilisés
 
-**FLOW:**
-```
-SERVEUR:
+| Concept | Utilisation |
+|---------|-------------|
+| `wait()` | Cuisinier attend si file vide |
+| `notify()` | Serveur ajoute commande, réveille UN cuisinier |
+| `synchronized` | Protège la PriorityQueue |
+| `PriorityQueue` | Tri automatique par priorité |
+
+#### Flow
+
+```java
+// SERVEUR:
 synchronized(fileCommandes) {
-    fileCommandes.add(nouvelleCommande)
-    notify() // Réveille UN cuisinier
+    fileCommandes.add(nouvelleCommande);
+    notify(); // Réveille UN cuisinier
 }
 
-CUISINIER:
+// CUISINIER:
 synchronized(fileCommandes) {
     while(fileCommandes.isEmpty()) {
-        wait() // Dort jusqu'à réveil
+        wait(); // Dort jusqu'à réveil
     }
-    commande = fileCommandes.poll() // Prend selon priorité
+    commande = fileCommandes.poll(); // Prend selon priorité
 }
 ```
 
-**TYPES DE COMMANDES:**
-```
-URGENTE    (Prio 1) → Dessert, Boisson    → 30 sec
-NORMALE    (Prio 2) → Plat principal      → 3 min
-LENTE      (Prio 3) → Plat mijoté         → 5 min
-```
+#### Types de Commandes
+
+| Type | Priorité | Exemples | Temps |
+|------|----------|----------|-------|
+| URGENTE | 1 | Dessert, Boisson | 30 sec |
+| NORMALE | 2 | Plat principal | 3 min |
+| LENTE | 3 | Plat mijoté | 5 min |
 
 ---
 
-### MODULE 3 : ÉQUIPEMENTS DE CUISINE 🔥
+### MODULE 3 : ÉQUIPEMENTS DE CUISINE
+
 **Personne 3**
 
-```
+> [!CAUTION]
+> Ce module démontre intentionnellement un **DEADLOCK CIRCULAIRE** et ses solutions!
+
+```text
 PROBLÈME : Ressources limitées partagées → DEADLOCK!
 
 ÉQUIPEMENTS (Ressources):
@@ -153,18 +168,19 @@ PROBLÈME : Ressources limitées partagées → DEADLOCK!
 └──────────┘
 ```
 
-**LE DEADLOCK CIRCULAIRE:**
-```
+#### Le Deadlock Circulaire
+
+```text
 SCÉNARIO QUI BLOQUE:
 
 Cuisinier-1: Fait PIZZA
     1. Lock(FOUR-1) ✓
     2. Attend Lock(FRITEUSE) ⏳ [occupée par C2]
-    
-Cuisinier-2: Fait STEAK-FRITES  
+
+Cuisinier-2: Fait STEAK-FRITES
     1. Lock(FRITEUSE) ✓
     2. Attend Lock(GRILL-1) ⏳ [occupé par C3]
-    
+
 Cuisinier-3: Fait VIANDE AU FOUR
     1. Lock(GRILL-1) ✓
     2. Attend Lock(FOUR-1) ⏳ [occupé par C1]
@@ -186,22 +202,27 @@ Cuisinier-3: Fait VIANDE AU FOUR
 → DEADLOCK CIRCULAIRE! Personne ne peut avancer!
 ```
 
-**CONCEPTS UTILISÉS:**
-- `ReentrantLock` → Un verrou par équipement
-- `lock()` → Acquisition exclusive
-- `unlock()` → Libération (TOUJOURS dans finally!)
-- `tryLock(timeout)` → Tentative avec limite de temps
+#### Concepts Utilisés
 
-**SOLUTIONS:**
+| Concept | Utilisation |
+|---------|-------------|
+| `ReentrantLock` | Un verrou par équipement |
+| `lock()` | Acquisition exclusive |
+| `unlock()` | Libération (TOUJOURS dans finally!) |
+| `tryLock(timeout)` | Tentative avec limite de temps |
 
-**VERSION 1 - DÉMO (Bloque):**
+#### Solutions
+
+##### VERSION 1 - DÉMO (Bloque)
+
 ```java
 // MAUVAIS - Ordre différent
 four.lock();
 friteuse.lock();  // Deadlock!
 ```
 
-**VERSION 2 - tryLock (OK):**
+##### VERSION 2 - tryLock (OK)
+
 ```java
 // BON - Timeout + retry
 if(four.tryLock(2, SECONDS)) {
@@ -217,7 +238,8 @@ if(four.tryLock(2, SECONDS)) {
 }
 ```
 
-**VERSION 3 - Ordre cohérent (OK):**
+##### VERSION 3 - Ordre cohérent (OK)
+
 ```java
 // BON - Toujours même ordre
 friteuse.lock();  // 1
@@ -234,12 +256,16 @@ try {
 
 ---
 
-### MODULE 4 : CAISSE + STOCK 💰📦
+### MODULE 4 : CAISSE + STOCK
+
 **Personne 4**
 
-```
-PARTIE A: CAISSE (Race Condition)
+#### PARTIE A: CAISSE (Race Condition)
 
+> [!WARNING]
+> Démontre une **race condition** classique sur une variable partagée!
+
+```text
 2 Caissiers traitent paiements simultanément:
 ┌──────┐        ┌──────┐
 │Caiss1│        │Caiss2│
@@ -251,23 +277,27 @@ PARTIE A: CAISSE (Race Condition)
     │ revenuTotal   │  ← VARIABLE PARTAGÉE
     │ (int)         │
     └───────────────┘
-
-SANS synchronized:
-    Caiss1 lit: 100€
-    Caiss2 lit: 100€
-    Caiss1 écrit: 100 + 15 = 115€
-    Caiss2 écrit: 100 + 20 = 120€
-    → Résultat: 120€ (15€ perdus!)
-
-AVEC synchronized:
-    Caiss1 lock → lit 100 → écrit 115 → unlock
-    Caiss2 lock → lit 115 → écrit 135 → unlock
-    → Résultat: 135€ ✓
 ```
 
+**SANS synchronized:**
+```java
+Caiss1 lit: 100€
+Caiss2 lit: 100€
+Caiss1 écrit: 100 + 15 = 115€
+Caiss2 écrit: 100 + 20 = 120€
+→ Résultat: 120€ (15€ perdus!)
 ```
-PARTIE B: STOCK (wait/notify + Thread dédié)
 
+**AVEC synchronized:**
+```java
+Caiss1 lock → lit 100 → écrit 115 → unlock
+Caiss2 lock → lit 115 → écrit 135 → unlock
+→ Résultat: 135€ OK
+```
+
+#### PARTIE B: STOCK (wait/notify + Thread dédié)
+
+```text
 ┌────────────────────────────────────────┐
 │  STOCK INGRÉDIENTS                     │
 │  ┌──────────┐  ┌──────────┐           │
@@ -288,43 +318,47 @@ PARTIE B: STOCK (wait/notify + Thread dédié)
     └──┘└──┘└──┘            └────┘
 ```
 
-**FLOW STOCK:**
-```
-CUISINIER consomme:
+#### Flow Stock
+
+```java
+// CUISINIER consomme:
 synchronized(stock) {
     if(stock.tomates < 5) {
-        notify(gestionnaireStock) // Signal stock bas!
-        wait() // Attend réapprovisionnement
+        notify(gestionnaireStock); // Signal stock bas!
+        wait(); // Attend réapprovisionnement
     }
-    stock.tomates -= 5
+    stock.tomates -= 5;
 }
 
-GESTIONNAIRE STOCK (thread qui tourne):
+// GESTIONNAIRE STOCK (thread qui tourne):
 while(true) {
     synchronized(stock) {
         while(!stock.estBas()) {
-            wait() // Dort jusqu'à signal
+            wait(); // Dort jusqu'à signal
         }
         // Stock bas détecté!
-        sleep(3000) // Simule livraison
-        stock.reapprovisionner(+50)
-        notifyAll() // Réveille cuisiniers bloqués
+        sleep(3000); // Simule livraison
+        stock.reapprovisionner(+50);
+        notifyAll(); // Réveille cuisiniers bloqués
     }
 }
 ```
 
-**CONCEPTS UTILISÉS:**
-- `synchronized` → Protège compteur revenus (race condition)
-- `wait()` → Cuisinier attend réapprovisionnement
-- `notify()` → Signal stock bas
-- `notifyAll()` → Stock rempli, réveille tous cuisiniers
-- `Thread` dédié → GestionnaireStock tourne en arrière-plan
+#### Concepts Utilisés
+
+| Concept | Utilisation |
+|---------|-------------|
+| `synchronized` | Protège compteur revenus (race condition) |
+| `wait()` | Cuisinier attend réapprovisionnement |
+| `notify()` | Signal stock bas |
+| `notifyAll()` | Stock rempli, réveille tous cuisiniers |
+| `Thread` dédié | GestionnaireStock tourne en arrière-plan |
 
 ---
 
-## 🔄 FLOW GLOBAL - VIE D'UN CLIENT
+## FLOW GLOBAL - VIE D'UN CLIENT
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │  1. CLIENT ARRIVE                                           │
 │     Thread démarre                                          │
@@ -428,110 +462,92 @@ while(true) {
 
 ---
 
-## 📊 MAPPING CONCEPTS → UTILISATION
+## MAPPING CONCEPTS → UTILISATION
 
-```
-┌──────────────────┬─────────────────────────────────────────────┐
-│   CONCEPT        │   OÙ UTILISÉ                                │
-├──────────────────┼─────────────────────────────────────────────┤
-│ wait()           │ • Client attend table                       │
-│                  │ • Cuisinier attend commande                 │
-│                  │ • Cuisinier attend stock                    │
-│                  │ • GestStock attend signal stock bas         │
-├──────────────────┼─────────────────────────────────────────────┤
-│ notify()         │ • Commande ajoutée (réveille 1 cuisinier)  │
-│                  │ • Stock bas (réveille GestStock)            │
-├──────────────────┼─────────────────────────────────────────────┤
-│ notifyAll()      │ • Table libérée (réveille tous clients)    │
-│                  │ • Stock rempli (réveille tous cuisiniers)  │
-├──────────────────┼─────────────────────────────────────────────┤
-│ synchronized     │ • Compteur tables disponibles               │
-│                  │ • File de commandes (PriorityQueue)        │
-│                  │ • Stock ingrédients                         │
-│                  │ • Compteur revenus (race condition!)        │
-│                  │ • File attente clients                      │
-├──────────────────┼─────────────────────────────────────────────┤
-│ ReentrantLock    │ • Chaque table VIP (5 locks)               │
-│                  │ • Chaque four (3 locks)                     │
-│                  │ • Chaque grill (2 locks)                    │
-│                  │ • Friteuse (1 lock)                         │
-├──────────────────┼─────────────────────────────────────────────┤
-│ tryLock()        │ • Tables VIP (timeout 30s → bascule)       │
-│                  │ • Équipements (timeout 2s → retry)         │
-│                  │ • Évite DEADLOCK circulaire                 │
-├──────────────────┼─────────────────────────────────────────────┤
-│ sleep()          │ • Client regarde menu (1-2s)               │
-│                  │ • Client mange (3-5s)                       │
-│                  │ • Cuisinier cuisine (2-4s)                  │
-│                  │ • Livraison stock (3s)                      │
-└──────────────────┴─────────────────────────────────────────────┘
-```
+| Concept | Où Utilisé |
+|---------|------------|
+| **wait()** | • Client attend table<br>• Cuisinier attend commande<br>• Cuisinier attend stock<br>• GestStock attend signal stock bas |
+| **notify()** | • Commande ajoutée (réveille 1 cuisinier)<br>• Stock bas (réveille GestStock) |
+| **notifyAll()** | • Table libérée (réveille tous clients)<br>• Stock rempli (réveille tous cuisiniers) |
+| **synchronized** | • Compteur tables disponibles<br>• File de commandes (PriorityQueue)<br>• Stock ingrédients<br>• Compteur revenus (race condition!)<br>• File attente clients |
+| **ReentrantLock** | • Chaque table VIP (5 locks)<br>• Chaque four (3 locks)<br>• Chaque grill (2 locks)<br>• Friteuse (1 lock) |
+| **tryLock()** | • Tables VIP (timeout 30s → bascule)<br>• Équipements (timeout 2s → retry)<br>• Évite DEADLOCK circulaire |
+| **sleep()** | • Client regarde menu (1-2s)<br>• Client mange (3-5s)<br>• Cuisinier cuisine (2-4s)<br>• Livraison stock (3s) |
 
 ---
 
-## 🎭 LES ACTEURS (Threads)
+## LES ACTEURS (Threads)
 
-```
-CLIENTS (50 threads)
+### Clients (50 threads)
+```text
 ┌──┐┌──┐┌──┐┌──┐┌──┐
 │C1││C2││C3││C4││C5│ ... x50
 └──┘└──┘└──┘└──┘└──┘
-Type: 70% Normal, 30% VIP
+```
+**Type:** 70% Normal, 30% VIP
 
-SERVEURS (4 threads)
+### Serveurs (4 threads)
+```text
 ┌──┐┌──┐┌──┐┌──┐
 │S1││S2││S3││S4│
 └──┘└──┘└──┘└──┘
-Rôle: Prendre commandes
+```
+**Rôle:** Prendre commandes
 
-CUISINIERS (3 threads)
+### Cuisiniers (3 threads)
+```text
 ┌──┐┌──┐┌──┐
 │C1││C2││C3│
 └──┘└──┘└──┘
-Rôle: Préparer plats
+```
+**Rôle:** Préparer plats
 
-CHEF (1 thread)
+### Chef (1 thread)
+```text
 ┌────┐
 │CHEF│
 └────┘
-Rôle: Priorité sur commandes URGENTES
+```
+**Rôle:** Priorité sur commandes URGENTES
 
-CAISSIERS (2 threads)
+### Caissiers (2 threads)
+```text
 ┌──┐┌──┐
 │$1││$2│
 └──┘└──┘
-Rôle: Encaisser paiements
+```
+**Rôle:** Encaisser paiements
 
-GESTIONNAIRE STOCK (1 thread)
+### Gestionnaire Stock (1 thread)
+```text
 ┌──┐
 │GS│
 └──┘
-Rôle: Réapprovisionner automatiquement
-
-TOTAL: 61 THREADS CONCURRENTS!
 ```
+**Rôle:** Réapprovisionner automatiquement
+
+> [!NOTE]
+> **TOTAL: 61 THREADS CONCURRENTS!**
 
 ---
 
 ## 🏆 POURQUOI C'EST CHALLENGEANT
 
-```
-✓ 61 threads concurrents        (vs 10-20 dans version simple)
-✓ 4 niveaux sync différents      (wait, synchronized, lock, tryLock)
-✓ Deadlock RÉEL                  (3+ ressources circulaires)
-✓ Race condition démontrée       (caisse sans/avec synchronized)
-✓ Système priorités              (3 niveaux de commandes)
-✓ Thread dédié stock             (tourne en arrière-plan)
-✓ Gestion timeout complexe       (tryLock multiples)
-✓ 15+ fichiers organisés         (architecture propre)
-✓ Dashboard temps réel           (affichage concurrent)
-```
+- ✅ **61 threads concurrents** (vs 10-20 dans version simple)
+- ✅ **4 niveaux sync différents** (wait, synchronized, lock, tryLock)
+- ✅ **Deadlock RÉEL** (3+ ressources circulaires)
+- ✅ **Race condition démontrée** (caisse sans/avec synchronized)
+- ✅ **Système priorités** (3 niveaux de commandes)
+- ✅ **Thread dédié stock** (tourne en arrière-plan)
+- ✅ **Gestion timeout complexe** (tryLock multiples)
+- ✅ **15+ fichiers organisés** (architecture propre)
+- ✅ **Dashboard temps réel** (affichage concurrent)
 
 ---
 
 ## 📂 STRUCTURE FICHIERS
 
-```
+```text
 restaurant/
 │
 ├── models/
@@ -574,30 +590,28 @@ restaurant/
 
 ## 📅 TIMELINE
 
-```
-SEMAINE 1:
-├─ Jours 1-3 : Développement modules individuels
-├─ Jour 4    : Tests unitaires
-└─ Jour 5    : Réunion intégration
+### Semaine 1
+- **Jours 1-3:** Développement modules individuels
+- **Jour 4:** Tests unitaires
+- **Jour 5:** Réunion intégration
 
-SEMAINE 2:
-├─ Jours 6-8  : Intégration progressive
-├─ Jours 9-10 : Tests + corrections bugs
-├─ Jours 11-12: Démos + dashboard
-└─ Jours 13-14: Documentation + présentation
-```
+### Semaine 2
+- **Jours 6-8:** Intégration progressive
+- **Jours 9-10:** Tests + corrections bugs
+- **Jours 11-12:** Démos + dashboard
+- **Jours 13-14:** Documentation + présentation
 
 ---
 
 ## 🎯 RÉSUMÉ RAPIDE
 
-**4 PERSONNES = 4 MODULES**
+### 4 PERSONNES = 4 MODULES
 
 1. **Tables** → wait/notify + ReentrantLock + tryLock
-2. **Commandes** → wait/notify + synchronized + PriorityQueue  
+2. **Commandes** → wait/notify + synchronized + PriorityQueue
 3. **Équipements** → ReentrantLock + tryLock + DEADLOCK démo/fix
 4. **Caisse+Stock** → synchronized + wait/notify + Thread dédié
 
-**CHAQUE CONCEPT UTILISÉ NATURELLEMENT**  
-**61 THREADS | 15+ FICHIERS | 1.5-2 SEMAINES**
-
+> [!IMPORTANT]
+> **CHAQUE CONCEPT UTILISÉ NATURELLEMENT**
+> **61 THREADS | 15+ FICHIERS | 1.5-2 SEMAINES**
