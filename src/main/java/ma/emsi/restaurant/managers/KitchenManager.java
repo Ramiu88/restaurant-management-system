@@ -1,26 +1,77 @@
 package ma.emsi.restaurant.managers;
 
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Monitor for Kitchen Equipment.
  * Manages locks for shared resources (Oven, Grill, etc.) to prevent deadlocks.
  */
 public class KitchenManager {
     
-    // TODO: Define ReentrantLocks for:
-    // - Ovens (3)
-    // - Grills (2)
-    // - Fryer (1)
+    // Resources
+    private final ReentrantLock[] ovens = new ReentrantLock[3];
+    private final ReentrantLock[] grills = new ReentrantLock[2];
+    private final ReentrantLock fryer = new ReentrantLock();
+
+    public KitchenManager() {
+        for (int i = 0; i < ovens.length; i++) ovens[i] = new ReentrantLock();
+        for (int i = 0; i < grills.length; i++) grills[i] = new ReentrantLock();
+    }
 
     public void useOven(long durationMs) throws InterruptedException {
-        // TODO: Acquire lock, sleep, release lock
+        // Simple strategy: try to get any oven
+        ReentrantLock acquiredOven = null;
+        while (acquiredOven == null) {
+            for (ReentrantLock oven : ovens) {
+                if (oven.tryLock()) {
+                    acquiredOven = oven;
+                    break;
+                }
+            }
+            if (acquiredOven == null) {
+                Thread.sleep(100); // Wait a bit before retrying
+            }
+        }
+        
+        try {
+            System.out.println(Thread.currentThread().getName() + " is using an Oven...");
+            Thread.sleep(durationMs);
+        } finally {
+            acquiredOven.unlock();
+        }
     }
 
     public void useGrill(long durationMs) throws InterruptedException {
-        // TODO: Acquire lock, sleep, release lock
+         ReentrantLock acquiredGrill = null;
+        while (acquiredGrill == null) {
+            for (ReentrantLock grill : grills) {
+                if (grill.tryLock()) {
+                    acquiredGrill = grill;
+                    break;
+                }
+            }
+            if (acquiredGrill == null) {
+                Thread.sleep(100);
+            }
+        }
+        
+        try {
+            System.out.println(Thread.currentThread().getName() + " is using a Grill...");
+            Thread.sleep(durationMs);
+        } finally {
+            acquiredGrill.unlock();
+        }
     }
 
     public void useFryer(long durationMs) throws InterruptedException {
-        // TODO: Acquire lock, sleep, release lock
+        fryer.lock();
+        try {
+            System.out.println(Thread.currentThread().getName() + " is using the Fryer...");
+            Thread.sleep(durationMs);
+        } finally {
+            fryer.unlock();
+        }
     }
 
     /**
