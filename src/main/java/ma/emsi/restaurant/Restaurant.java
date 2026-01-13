@@ -55,4 +55,12 @@ public class Restaurant {
         // TODO: Initialize and start Actor threads (Servers, Cooks, etc.)
         System.out.println("Restaurant Simulation Started...");
     }
+
+    /**
+     * Reset the singleton instance for testing purposes.
+     * This should only be called from tests to ensure clean state between tests.
+     */
+    public static synchronized void resetForTesting() {
+        instance = null;
+    }
 }

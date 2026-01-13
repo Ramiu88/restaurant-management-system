@@ -66,6 +66,7 @@ public class OrderQueue {
                 "] Took Order #" + order.getOrderId() +
                 " (" + order.getDish().getName() + ")");
 
+        notifyAll(); // Wake waiting servers (queue no longer full)
         return order;
     }
 
