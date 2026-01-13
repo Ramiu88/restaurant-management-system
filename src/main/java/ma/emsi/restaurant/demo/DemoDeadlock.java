@@ -38,14 +38,14 @@ public class DemoDeadlock {
         // Cook 1: Oven → Fryer (locks in this order)
         Thread cook1 = new Thread(() -> {
             oven.lock();
-            System.out.println("✓ Cook1: Locked Oven");
-            System.out.println("⏳ Cook1: Waiting for Fryer...");
+            System.out.println("[OK] Cook1: Locked Oven");
+            System.out.println("[WAIT] Cook1: Waiting for Fryer...");
             sleep(100); // Small delay to ensure all threads get first lock
 
-            System.out.println("🔒 Cook1: Trying to lock Fryer...");
+            System.out.println("[TRY] Cook1: Trying to lock Fryer...");
             fryer.lock(); // ← DEADLOCK HERE! Fryer held by Cook2
 
-            System.out.println("✓ Cook1: Got both locks! (This will never print)");
+            System.out.println("[OK] Cook1: Got both locks! (This will never print)");
             fryer.unlock();
             oven.unlock();
         }, "Cook1");
@@ -53,14 +53,14 @@ public class DemoDeadlock {
         // Cook 2: Fryer → Grill (locks in this order)
         Thread cook2 = new Thread(() -> {
             fryer.lock();
-            System.out.println("✓ Cook2: Locked Fryer");
-            System.out.println("⏳ Cook2: Waiting for Grill...");
+            System.out.println("[OK] Cook2: Locked Fryer");
+            System.out.println("[WAIT] Cook2: Waiting for Grill...");
             sleep(100);
 
-            System.out.println("🔒 Cook2: Trying to lock Grill...");
+            System.out.println("[TRY] Cook2: Trying to lock Grill...");
             grill.lock(); // ← DEADLOCK HERE! Grill held by Cook3
 
-            System.out.println("✓ Cook2: Got both locks! (This will never print)");
+            System.out.println("[OK] Cook2: Got both locks! (This will never print)");
             grill.unlock();
             fryer.unlock();
         }, "Cook2");
@@ -68,14 +68,14 @@ public class DemoDeadlock {
         // Cook 3: Grill → Oven (locks in this order)
         Thread cook3 = new Thread(() -> {
             grill.lock();
-            System.out.println("✓ Cook3: Locked Grill");
-            System.out.println("⏳ Cook3: Waiting for Oven...");
+            System.out.println("[OK] Cook3: Locked Grill");
+            System.out.println("[WAIT] Cook3: Waiting for Oven...");
             sleep(100);
 
-            System.out.println("🔒 Cook3: Trying to lock Oven...");
+            System.out.println("[TRY] Cook3: Trying to lock Oven...");
             oven.lock(); // ← DEADLOCK HERE! Oven held by Cook1
 
-            System.out.println("✓ Cook3: Got both locks! (This will never print)");
+            System.out.println("[OK] Cook3: Got both locks! (This will never print)");
             oven.unlock();
             grill.unlock();
         }, "Cook3");
@@ -90,15 +90,15 @@ public class DemoDeadlock {
 
         // Show the deadlock state
         System.out.println("\n╔════════════════════════════════════════════╗");
-        System.out.println("║     ⚠️  DEADLOCK DETECTED!  ⚠️            ║");
+        System.out.println("║     [!]  DEADLOCK DETECTED!  [!]            ║");
         System.out.println("╚════════════════════════════════════════════╝");
-        System.out.println("\n🔴 All threads are STUCK!");
+        System.out.println("\n[ERROR] All threads are STUCK!");
         System.out.println("\nCircular dependency:");
         System.out.println("  Cook1: Has Oven  → Wants Fryer");
         System.out.println("  Cook2: Has Fryer → Wants Grill");
         System.out.println("  Cook3: Has Grill → Wants Oven");
         System.out.println("         ↑_________________________|");
-        System.out.println("\n💡 Nobody can proceed = DEADLOCK!\n");
+        System.out.println("\n[*] Nobody can proceed = DEADLOCK!\n");
 
         System.out.println("╔════════════════════════════════════════════╗");
         System.out.println("║     HOW KITCHENMANAGER PREVENTS THIS      ║");
@@ -151,7 +151,7 @@ public class DemoDeadlock {
         t2.start();
 
         sleep(1000);
-        System.out.println("\n⚠️  DEADLOCK! Both threads stuck!\n");
+        System.out.println("\n[!]  DEADLOCK! Both threads stuck!\n");
 
         t1.interrupt();
         t2.interrupt();
