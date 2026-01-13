@@ -158,7 +158,7 @@ public class Client extends Thread {
      */
     private void payAtCashier() {
         double amount = 15.0 + random.nextDouble() * 35.0; // €15-50
-        System.out.println("💳 " + getName() + " paying €" + String.format("%.2f", amount) + "...");
+        System.out.println("[" + getName() + "] paying €" + String.format("%.2f", amount) + "...");
         
         /* TODO: INTEGRATION WITH SALADIN'S MODULE */
         // Uncomment when FinanceManager is ready:
