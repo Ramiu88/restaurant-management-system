@@ -1,7 +1,10 @@
 package ma.emsi.restaurant.actors;
 
 import ma.emsi.restaurant.Restaurant;
+import ma.emsi.restaurant.Constants;
 import ma.emsi.restaurant.entities.Table;
+import ma.emsi.restaurant.entities.Order;
+import ma.emsi.restaurant.entities.Dish;
 import ma.emsi.restaurant.managers.TableManager;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
@@ -115,26 +118,26 @@ public class Client extends Thread {
     private void placeOrder() {
         System.out.println(getName() + " placing order...");
 
+        // Select random dish from pre-defined menu
+        Dish dish = selectRandomDish();
+        int priority = isVip ? Constants.PRIORITY_URGENT : Constants.PRIORITY_NORMAL;
 
-        /* TODO: INTEGRATION WITH CRANKY'S MODULE */
-        // ═══════════════════════════════════════════════════════════
-        // Uncomment when OrderQueue is ready:
-        
-        String dishName = selectRandomDish();
-        int priority = isVip ? 1 : 2; // VIP orders are URGENT
-        
+        // Create order with new API (Anakin's version)
         Order order = new Order(
-            getName(),
-            new Dish(dishName, 3000), // 3 second prep time
-            priority
+            Restaurant.getInstance().getOrderQueue().generateOrderId(),
+            Integer.parseInt(getName().split("-")[1]), // Extract client ID from name
+            dish,
+            priority,
+            System.currentTimeMillis()
         );
-        
-        Restaurant.getInstance().getOrderQueue().addOrder(order);
-        System.out.println(getName() + " ordered: " + dishName);
-        
-        
-        // STUB for now
-        System.out.println("   [STUB] Order placed - waiting for Cranky's OrderQueue module");
+
+        try {
+            Restaurant.getInstance().getOrderQueue().addOrder(order);
+            System.out.println(getName() + " ordered: " + dish.getName());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.out.println(getName() + " interrupted while placing order");
+        }
     }
 
     /**
@@ -178,10 +181,10 @@ public class Client extends Thread {
     // HELPER METHODS
 
     /**
-     * Select random dish from menu (for future integration)
+     * Select random dish from pre-defined menu
      */
-    private String selectRandomDish() {
-        String[] dishes = {"Pasta", "Pizza", "Burger", "Salad", "Steak"};
+    private Dish selectRandomDish() {
+        Dish[] dishes = {Dish.DESSERT, Dish.STEAK, Dish.PIZZA};
         return dishes[random.nextInt(dishes.length)];
     }
 
