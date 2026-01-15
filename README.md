@@ -1,98 +1,98 @@
 # Restaurant Management System
 
-A Java-based restaurant simulation demonstrating advanced concurrency concepts including multi-threading, synchronization, locks, and deadlock prevention.
+Simulation de restaurant en Java démontrant les concepts avancés de concurrence : multi-threading, synchronisation, locks, et prévention des deadlocks.
 
-## Overview
+## Vue d'ensemble
 
-The system simulates a restaurant with ~61 concurrent threads representing clients, servers, cooks, and staff. It demonstrates producer-consumer patterns, bounded buffers, priority queues, and deadlock prevention strategies.
+Le système simule un restaurant avec ~61 threads concurrents représentant les clients, serveurs, cuisiniers et personnel. Il démontre les patterns producteur-consommateur, tampons bornés, files de priorité, et stratégies de prévention de deadlock.
 
-## Concurrency Concepts Demonstrated
+## Concepts de Concurrence Démontrés
 
-| Concept | Implementation |
+| Concept | Implémentation |
 |---------|---------------|
-| Producer-Consumer | `OrderQueue` with `wait()/notify()` |
-| Bounded Buffer | Queue blocks when full, notifies when space available |
-| ReentrantLock | VIP table reservations with `tryLock(timeout)` |
-| Deadlock Prevention | Kitchen equipment uses `tryLock()` with fallback |
-| Synchronized | Race condition prevention in `FinanceManager` |
-| PriorityQueue | Orders sorted by priority (1=URGENT, 2=NORMAL, 3=SLOW) |
-| FIFO Ordering | Same priority sorted by timestamp |
-| Thread Safety | All shared state properly synchronized |
+| Producteur-Consommateur | `OrderQueue` avec `wait()/notify()` |
+| Tampon Borné | La file se bloque quand pleine, notifie quand de la place |
+| ReentrantLock | Réservations VIP avec `tryLock(timeout)` |
+| Prévention Deadlock | Équipement cuisine utilise `tryLock()` avec fallback |
+| Synchronized | Prévention des race conditions dans `FinanceManager` |
+| PriorityQueue | Commandes triées par priorité (1=URGENT, 2=NORMAL, 3=SLOW) |
+| FIFO | Même priorité = tri par timestamp |
+| Thread Safety | Tout l'état partagé est synchronisé |
 
 ## Architecture
 
 ```
 src/main/java/ma/emsir/restaurant/
 ├── managers/
-│   ├── FinanceManager.java    - Thread-safe payment processing
-│   ├── StockManager.java       - Inventory management with wait/notify
-│   ├── OrderQueue.java         - Priority-based bounded queue
-│   ├── TableManager.java       - VIP priority with ReentrantLock
-│   └── KitchenManager.java     - Equipment locks, deadlock prevention
+│   ├── FinanceManager.java    - Paiements thread-safe
+│   ├── StockManager.java       - Inventaire avec wait/notify
+│   ├── OrderQueue.java         - File bornée avec priorité
+│   ├── TableManager.java       - Priorité VIP avec ReentrantLock
+│   └── KitchenManager.java     - Locks équipement, prévention deadlock
 ├── entities/
-│   ├── Order.java              - Comparable priority order
-│   ├── Dish.java               - Menu items with equipment/ingredients
-│   └── Table.java              - Table entity with lock
+│   ├── Order.java              - Commande avec priorité comparable
+│   ├── Dish.java               - Plats avec équipement/ingrédients
+│   └── Table.java              - Table avec lock
 ├── actors/
-│   ├── Client.java             - Table acquisition, ordering, payment
-│   ├── Server.java             - Producer: adds orders to queue
-│   ├── Cook.java               - Consumer: takes and prepares orders
-│   ├── Cashier.java            - Payment processing
-│   └── StockManagerThread.java - Background stock replenishment
-└── Demo files
-    ├── Main.java               - Full restaurant simulation
-    ├── Demo.java               - Concept-by-concept proof
-    ├── TeamDemo.java           - Per-contributor showcase
-    └── EdgeCaseDemo.java       - Boundary condition testing
+│   ├── Client.java             - Acquisition table, commande, paiement
+│   ├── Server.java             - Producteur : ajoute commandes à la file
+│   ├── Cook.java               - Consommateur : prépare les commandes
+│   ├── Cashier.java            - Traitement paiements
+│   └── StockManagerThread.java - Réapprovisionnement en arrière-plan
+└── Démos
+    ├── Main.java               - Simulation complète
+    ├── Demo.java               - Preuve concept par concept
+    ├── TeamDemo.java           - Showcase par contributeur
+    └── EdgeCaseDemo.java       - Tests cas limites
 ```
 
-## Running the Project
+## Exécution
 
 ```bash
-# Build and install
+# Compiler et installer
 mvn clean install
 
-# Run main simulation
+# Simulation principale
 mvn exec:java -Dexec.mainClass="ma.emsi.restaurant.Main"
 
-# Run concept demo
+# Démo concepts
 mvn exec:java -Dexec.mainClass="ma.emsi.restaurant.Demo"
 
-# Run team demo
+# Démo équipe
 mvn exec:java -Dexec.mainClass="ma.emsi.restaurant.TeamDemo"
 
-# Run edge case tests
+# Tests cas limites
 mvn exec:java -Dexec.mainClass="ma.emsi.restaurant.EdgeCaseDemo"
 ```
 
-## Test Coverage
+## Couverture de Tests
 
-115 JUnit tests covering all modules:
+115 tests JUnit couvrant tous les modules :
 
-| Module | Tests | Coverage |
-|--------|-------|----------|
-| FinanceManager | 14 | Payments, concurrency, race conditions |
-| OrderQueue | 10 | Priority ordering, bounded buffer, blocking |
-| StockManager | 19 | Consumption, replenishment, thread safety |
-| KitchenManager | 15 | Equipment acquisition, deadlock prevention |
-| Order/Dish | 42 | Entity validation, comparison, equals/hashCode |
-| Cook/Server | 14 | End-to-end integration |
+| Module | Tests | Couverture |
+|--------|-------|------------|
+| FinanceManager | 14 | Paiements, concurrence, race conditions |
+| OrderQueue | 10 | Priorité, tampon borné, blocage |
+| StockManager | 19 | Consommation, réapprovisionnement, thread safety |
+| KitchenManager | 15 | Acquisition équipement, prévention deadlock |
+| Order/Dish | 42 | Entités, comparaison, equals/hashCode |
+| Cook/Server | 14 | Intégration bout en bout |
 
-Run tests:
+Lancer les tests :
 ```bash
 mvn test
 ```
 
-## Team Contributions
+## Contributions de l'Équipe
 
-| Member | Module | Key Contributions |
-|--------|--------|------------------|
-| Saladin | Finance & Stock | `FinanceManager`, `StockManager`, JUnit tests |
-| Walid | Table Management | VIP priority with `ReentrantLock` and timeout |
-| Anakin | Order Queue | `OrderQueue`, entities, `Cook`, `Server` |
-| Marwan | Kitchen Equipment | `KitchenManager`, deadlock prevention |
+| Membre | Module | Contributions |
+|--------|--------|---------------|
+| Saladin | Finance & Stock | `FinanceManager`, `StockManager`, tests JUnit |
+| Walid | Gestion Tables | Priorité VIP avec `ReentrantLock` et timeout |
+| Anakin | File de Commandes | `OrderQueue`, entités, `Cook`, `Server` |
+| Marwan | Équipement Cuisine | `KitchenManager`, prévention deadlock |
 
-## Requirements
+## Prérequis
 
 - Java 11+
 - Maven 3.6+
