@@ -40,6 +40,11 @@ public class StockManager {
      * Integration point: Called by Cook (Cranky's module)
      */
     public synchronized boolean consumeIngredients(Map<String, Integer> needed) {
+        // Handle null or empty input gracefully
+        if (needed == null || needed.isEmpty()) {
+            return true; // Nothing to consume is a success
+        }
+
         // First check if we have enough of everything
         for (Map.Entry<String, Integer> entry : needed.entrySet()) {
             String ingredient = entry.getKey();
